@@ -1,0 +1,11 @@
+package com.deepak.api.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.deepak.api.entity.Accounts;
+
+public interface AccountsRepository extends JpaRepository<Accounts, Integer>{
+	
+	Optional<Account> findByCustomerId(String customerId);
+
+}

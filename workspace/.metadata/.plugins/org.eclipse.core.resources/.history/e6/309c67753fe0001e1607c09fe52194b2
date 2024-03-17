@@ -1,0 +1,88 @@
+package com.deepak.api.service.impl;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.Random;
+
+import org.springframework.stereotype.Service;
+
+import com.deepak.api.constants.AccountsConstants;
+import com.deepak.api.dto.AccountsDto;
+import com.deepak.api.dto.CustomerDto;
+import com.deepak.api.entity.Accounts;
+import com.deepak.api.entity.Customer;
+import com.deepak.api.exception.CustomerAlreadyExistsException;
+import com.deepak.api.exception.ResourceNotFoundException;
+import com.deepak.api.mapper.AccountsMapper;
+import com.deepak.api.mapper.CustomerMapper;
+import com.deepak.api.repository.AccountsRepository;
+import com.deepak.api.repository.CustomerRepository;
+import com.deepak.api.service.IAccountsService;
+
+import lombok.AllArgsConstructor;
+
+@Service
+@AllArgsConstructor
+public class AccountsServiceImpl implements IAccountsService {
+
+	private AccountsRepository accountsRepository;
+	private CustomerRepository customerRepository;
+
+	@Override
+	public void createCustomer(CustomerDto customerDto) throws Exception { // controller layer
+
+		Optional<Customer> optionalCustomer = customerRepository.findByMobileNumber(customerDto.getMobileNumber());
+
+		if (optionalCustomer.isPresent()) {
+
+			throw new CustomerAlreadyExistsException(
+					"Customer already exists with mobile number " + customerDto.getMobileNumber());
+
+			// will go to the created Exception package
+		}
+
+		Customer newCustomer = CustomerMapper.mapToCustomer(customerDto, new Customer());
+
+		newCustomer.setCreatedAt(LocalDateTime.now());
+		newCustomer.setCreatedBy("DeepakJaiwal");
+
+		Customer savedCustomer = customerRepository.save(newCustomer);
+		Accounts savedAccounts = accountsRepository.save(createUserAccounts(savedCustomer));
+
+	}
+
+	public Accounts createUserAccounts(Customer savedcustomers) { // carries saved data of customers
+
+		Accounts account = new Accounts();
+
+		account.setCustomerId(savedcustomers.getCustomerId());
+		long randomAccountNumber = 1000000000L + new Random().nextInt(900000000);
+		account.setAccountNumber(randomAccountNumber);
+		account.setAccountType(AccountsConstants.SAVINGS);
+		account.setBranchAddress(AccountsConstants.ADDRESS);
+		account.setCreatedAt(LocalDateTime.now());
+		account.setCreatedBy("DeepakJaiwal");
+		return account;
+
+	}
+
+	@Override
+	public CustomerDto fetchAccountDetails(String mobileNumber) {
+
+		Customer customer = customerRepository.findByMobileNumber(mobileNumber)
+
+				.orElseThrow(() -> new ResourceNotFoundException("customer", "mobileNumber", mobileNumber));
+
+		Accounts accounts = accountsRepository.findByCustomerId(customer.getCustomerId())
+
+				.orElseThrow(() -> ResourceNotFoundException("Account Details", "customer Id",
+						customer.getCustomerId().toString()));
+
+		CustomerDto customerDto = CustomerMapper.mapToCustomerDto(customer, new CustomerDto());
+
+		customerDto.setAccountsDto(AccountsMapper.mapToAccountsDto(accounts, new AccountsDto()));
+		return customerDto;
+
+	}
+
+}

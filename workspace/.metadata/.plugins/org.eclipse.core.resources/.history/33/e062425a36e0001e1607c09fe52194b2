@@ -1,0 +1,5 @@
+package com.deepak.api.exception;
+
+public class ResourceNotFoundException {
+
+}
