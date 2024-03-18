@@ -13,7 +13,7 @@
 	<artifactId>accounts</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>accounts</name>
-	<description>Microservice for account</description>
+	<description>Microservice for accounts</description>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
